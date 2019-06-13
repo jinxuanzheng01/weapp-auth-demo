@@ -1,6 +1,8 @@
 # weapp-auth-demo
 微信小程序授权统一管理方案（包含对wx对象的扩展）
 
+觉得有用的小伙伴希望可以点个star～ 😄😄😄
+
 # 用户授权篇
 
 > getUserInfo较为特殊，不包含在本文范围内，主要针对需要授权的功能性api，例如：[wx.startRecord](https://developers.weixin.qq.com/miniprogram/dev/api/media/recorder/wx.startRecord.html)，[wx.saveImageToPhotosAlbum](https://developers.weixin.qq.com/miniprogram/dev/api/media/image/wx.saveImageToPhotosAlbum.html)， [wx.getLocation](https://developers.weixin.qq.com/miniprogram/dev/api/location/wx.getLocation.html)

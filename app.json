@@ -1,0 +1,17 @@
+{
+  "permission": {
+    "scope.userLocation": {
+      "desc": "您的位置将用于发布/查看附近动态，小打卡将为您提供更好的服务"
+    }
+  },
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "WeChat",
+    "navigationBarTextStyle": "black"
+  },
+  "sitemapLocation": "sitemap.json"
+}

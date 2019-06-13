@@ -1,0 +1,8 @@
+<!--index.wxml-->
+<view class="container">
+
+    <view bindtap="bindGetLocation">授权地理位置信息</view>
+
+
+    <view bindtap="bindGetAddress" style="margin-top: 50rpx">授权收获地址权限</view>
+</view>

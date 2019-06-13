@@ -58,7 +58,7 @@
         let err, result;
 
         // 获取本地配置项
-        [err, result] = await to(getSetting());
+        [err, result] = await to(getSetting());         // 这里可以做一层缓存，检查缓存的状态，如果已授权可以不必再次走下面的流程，直接return出去即可
         if (err) {
             return cb('fail');
         }

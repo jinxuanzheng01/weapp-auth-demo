@@ -24,7 +24,7 @@ const Func = require('./Func');
 
     // 保存到相册
     exports.saveImageToPhotosAlbum = function (opts, done) {
-        Func.isCheckAuthApiSetting('scope.userLocation', () => done(opts));
+        Func.isCheckAuthApiSetting('scope.writePhotosAlbum', () => done(opts));
     }
 
     // ...more

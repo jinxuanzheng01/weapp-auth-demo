@@ -3,18 +3,19 @@
 
 觉得有用的小伙伴希望可以点个star～ 😄😄😄
 
-# 用户授权篇
+# 微信小程序另类玩法 --用户授权篇
 
 > getUserInfo较为特殊，不包含在本文范围内，主要针对需要授权的功能性api，例如：[wx.startRecord](https://developers.weixin.qq.com/miniprogram/dev/api/media/recorder/wx.startRecord.html)，[wx.saveImageToPhotosAlbum](https://developers.weixin.qq.com/miniprogram/dev/api/media/image/wx.saveImageToPhotosAlbum.html)， [wx.getLocation](https://developers.weixin.qq.com/miniprogram/dev/api/location/wx.getLocation.html)
 
 
 仓库地址：[https://github.com/jinxuanzheng01/weapp-auth-demo](https://github.com/jinxuanzheng01/weapp-auth-demo)
 
-<a name="6IpAR"></a>
+<a name="jmDYI"></a>
 ## 背景
-小程序内如果要调用部分接口需要用户进行授权，例如获取地理位置信息，收获地址，录音等等，但是小程序对于这些需要授权接口的并不是特别友好，最明显的有两点：
+小程序内如果要调用部分接口需要用户进行授权，例如获取地理位置信息，收获地址，录音等等，但是小程序对于这些需要授权的接口并不是特别友好，最明显的有两点：
 
-- 如果用户**已拒绝授权，则不会出现弹窗**，而是**直接进入接口 fail 回调**，其授权关系会记录在后台，**直到用户主动删除小程序**
+- 如果用户**已拒绝授权，则不会出现弹窗**，而是**直接进入接口 fail 回调**，
+- **没有统一的错误信息提示**，例如错误码
 
 一般情况而言，每次授权时都应该激活弹窗进行提示，是否进行授权，例如：
 
@@ -22,12 +23,14 @@
 
 而小程序内只有第一次进行授权时才会主动激活弹窗（微信提供的），其他情况下都会直接走fail回调，微信文档也在句末添加了一句**请开发者兼容用户拒绝授权的场景**<br />**<br />这种未做兼容的情况下如果用户想要使用录音功能，第一次点击拒绝授权，那么之后无论如何也**无法再次开启录音权限**，很明显不符合我们的预期。
 
-<a name="reacx"></a>
-## 授权处理方法
+**所以我们需要一个可以进行二次授权的解决方案**
+
+<a name="WO47Q"></a>
+## 常见处理方法
 
 <a name="JEylR"></a>
 #### 官方demo
-下面这段代码是微信官方提供的授权代码, 可以看到也并没有兼容拒绝过授权的场景查询是否授权（即无法再次调起授权）
+下面这段代码是微信官方提供的授权代码, 可以看到**也并没有兼容拒绝过授权的场景查询是否授权**（即无法再次调起授权）
 
 ```javascript
 // 可以通过 wx.getSetting 先查询一下用户是否授权了 "scope.record" 这个 scope
@@ -81,13 +84,14 @@ wx.getLocation({
 });
 ```
 
-上面代码，有些同学可能会对在fail回调里直接使用wx.getSetting有些疑问，这里主要是因为
+上面代码，有些同学可能会对在fail回调里直接**使用wx.getSetting有些疑问**，这里主要是因为
 
 - 微信返回的错误信息**没有一个统一code**
 - **errMsg又在不同平台有不同的表现**
 - 从埋点数据得出结论，调用这些api接口**出错率基本集中在未授权的状态下**
 
 这里为了方便就直接调用权限检查了 ，也可以稍微封装一下，方便扩展和复用，变成：
+
 ```javascript
   bindGetLocation(e) {
         let that = this;
@@ -118,17 +122,25 @@ wx.getLocation({
 
 看上去好像没有什么问题，fail里只引入了一行代码，
 
-这里如果只针对较少页面的话我认为已经够用了，毕竟‘如非必要，勿增实体’，但是对于小打卡这个小程序来说可能涉及到的页面，需要调用的场景偏多，我并不希望每次都人工去调用这些方法，毕竟人总会犯错
+这里如果只针对较少页面的话我认为已经够用了，毕竟**‘如非必要，勿增实体’**，但是对于小打卡这个小程序来说可能**涉及到的页面，需要调用的场景偏多**，我并不希望每次都**人工去调用**这些方法，毕竟人总会犯错
+
+<a name="U8Fc4"></a>
+## 梳理目标
+上文已经提到了背景和常见的处理方法，那么梳理一下我们的目标，**我们到底是为了解决什么问题**？列了下大致为下面三点：
+
+- **兼容用户拒绝授权**的场景，即**提供二次授权**
+- 解决多场景，多页面调用没有**统一规范**的问题
+- 在底层解决，**业务层不需要关心**二次授权的问题
 
 <a name="Jxrl3"></a>
 ## 扩展wx[funcName]方法
-为了节省认知成本和减少出错概率，我希望他是这个api默认携带的功能，也就是说因未授权出现错误时自动调起是否开启授权的弹窗
+为了**节省认知成本和减少出错概率**，我希望他是这个api默认携带的功能，也就是说**因未授权出现错误时自动调起是否开启授权的弹窗**
 
 为了实现这个功能，我们可能需要**对wx的原生api**进行一层包装了（关于页面的包装可以看：[如何基于微信原生构建应用级小程序底层架构](https://developers.weixin.qq.com/community/develop/article/doc/000ca60a70080897fa68a92fe51813)）
 
 <a name="M07dc"></a>
 #### 为wx.getLocation添加自己的方法
-这里需要注意的一点是直接使用常见的装饰模式是会出现如下报错的，因为wx这个对象在设置属性时没有设置set方法，这里需要单独处理一下
+这里需要注意的一点是直接使用常见的装饰模式是会**出现报错**，因为**wx这个对象在设置属性时没有设置set方法**，这里需要单独处理一下
 
 ```javascript
 // 直接装饰，会报错 Cannot set property getLocation of #<Object> which has only a getter 
@@ -151,7 +163,7 @@ wx.getLocation()
 
 <a name="DQALV"></a>
 #### 劫持fail方法
-第一步我们已经控制了wx.getLocation这个api，接下来就是对于fail方法的劫持，因为我们需要在fail里加入我们自己的授权逻辑
+第一步我们已经控制了wx.getLocation这个api，接下来就是对于fail方法的劫持，因为我们**需要在fail里加入我们自己的授权逻辑**
 
 ```javascript
 // 方法劫持
@@ -212,13 +224,13 @@ function authorization(scope) {
 
 ```
 
-可以看到现在已实现的功能已经达到了我们最开始的预期，即因授权报错作为了wx.getLocation默认携带的功能，我们在业务代码里再也不需要处理任何再次授权的逻辑
+可以看到现在已实现的功能**已经达到了我们最开始的预期**，即因授权报错作为了wx.getLocation默认携带的功能，我们在**业务代码里再也不需要处理任何再次授权的逻辑**
 
-也意味着wx.getLocation这个api不论在任何页面，组件，出现频次如何，我们都不需要关心它的授权逻辑（效果本来想贴gif图的，后面发现有图点大，具体效果去gif仓库跑一下demo吧）
+也意味着wx.getLocation这个api不论在任何页面，组件，出现频次如何，**我们都不需要关心它的授权逻辑（**效果本来想贴gif图的，后面发现有图点大，具体效果去[git仓库跑一下demo](https://github.com/jinxuanzheng01/weapp-auth-demo)吧）
 
 <a name="KgTiv"></a>
 #### 让我们再优化一波
-上面所述大致是整个的一个思路，但是应用到实际项目中还需要考虑到整体的扩展性和维护成本，那么就让我们来优化一波
+上面所述大致是整个原理的一个思路，但是应用到实际项目中还需要考虑到整体的扩展性和维护成本，那么就让我们再来优化一波
 
 **代码包结构：**<br />本质上只要在app.js这个启动文件内，引用./x-wxx/index文件对原有的wx对象进行覆盖即可
 
@@ -284,7 +296,7 @@ const Func = require('./Func');
 
 <a name="dm0Vc"></a>
 #### 更多的玩法
-可以看到我们无论后续扩展任何的微信api，都只需要在lib/api-extend.js 配置即可，这里不仅仅局限于授权，也可以做一些日志，传参的调整，例如：
+可以看到我们无论后续扩展任何的微信api，**都只需要在lib/api-extend.js 配置即可**，这里不仅仅局限于授权，**也可以做一些日志，传参的调整**，例如：
 
 ```javascript
  // 读取本地缓存(同步)
@@ -299,11 +311,11 @@ exports.getStorageSync = (key, done) => {
 };
 ```
 
-这样是不是很方便呢，至于Func.isCheckAuthApiSetting这个方法具体实现，为了节省文章行数请自行去git仓库里查看吧
+这样是不是很方便呢，至于Func.isCheckAuthApiSetting这个方法具体实现，为了节省文章行数请自行[去git仓库里查看](https://github.com/jinxuanzheng01/weapp-auth-demo)吧
 
 <a name="QiiFb"></a>
 #### 关于音频授权
-音频授权略为特殊，以wx.getRecorderManager为例，它并不能直接调起录音授权，所以并不能直接用上述的这种方法，不过我们可以曲线救国，达到类似的效果，还记得我们对于wx.authorize的包装么，本质上我们是可以直接使用它来进行授权的，比如将它用在我们已经封装好的录音管理器的start方法进行校验
+录音授权略为特殊，以wx.getRecorderManager为例，它**并不能直接调起录音授权**，所以并不能直接用上述的这种方法，不过我们可以曲线救国，达到类似的效果，还记得我们对于**wx.authorize**的包装么，本质上我们是可以直接使用它来进行授权的，比如将它用在我们已经封装好的录音管理器的start方法进行校验
 
 ```javascript
 wx.authorize({
@@ -311,7 +323,7 @@ wx.authorize({
 });
 ```
 
-实际上，为方便统一管理，Func.isCheckAuthApiSetting方法其实都是使用wx.authorize来实现授权的
+实际上，为方便统一管理，**Func.isCheckAuthApiSetting方法其实都是使用wx.authorize来实现授权的**
 
 ```javascript
 exports.isCheckAuthApiSetting = async function(type, cb) {
@@ -348,4 +360,7 @@ exports.isCheckAuthApiSetting = async function(type, cb) {
 ## 
 <a name="C2cFM"></a>
 ## 总结
-还是那么一句话吧，小程序不管和web开发有多少不同，本质上都是在js环境上进行开发的，<br />希望小程序的社区环境更加活跃，带来更多有趣的东西
+
+最后稍微总结下，通过上述的方案，我们解决了最开始[目标的同时](#Jxrl3)，也为wx这个对象上的方法提供了统一的装饰接口（lib/api-extend文件），**便于后续其他行为的操作比如埋点，日志，参数校验**
+
+**还是那么一句话吧，小程序不管和web开发有多少不同，本质上都是在js环境上进行开发的，**<br />**希望小程序的社区环境更加活跃，带来更多有趣的东西**
